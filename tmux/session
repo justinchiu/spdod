@@ -1,0 +1,42 @@
+new-window -n "root"
+send-keys "poetry shell" Enter
+split-window -h -p 50
+send-keys "poetry shell" Enter
+
+#new-window -n "oc"
+#split-window -h -p 50
+
+#new-window -n "agent"
+#send-keys "cd oc/agent" Enter
+#split-window -h -p 50
+#send-keys "cd oc/agent" Enter
+
+#new-window -n "agent2"
+#send-keys "cd oc/agent2" Enter
+#split-window -h -p 50
+#send-keys "cd oc/agent2" Enter
+
+#new-window -n "prompts"
+#send-keys "cd oc/prompts" Enter
+#split-window -h -p 50
+#send-keys "cd oc/prompts" Enter
+
+#new-window -n "promptdata"
+#send-keys "cd oc/promptdata" Enter
+#split-window -h -p 50
+#send-keys "cd oc/promptdata" Enter
+
+#new-window  -n "server"
+#send-keys "cd ../onecommon/webapp/gpt_experiments_turk" Enter
+#send-keys "ocenv" Enter
+#split-window -h -p 50
+#send-keys "cd ../onecommon/webapp/gpt_experiments_turk" Enter
+#send-keys "ocenv" Enter
+
+#new-window -n "selfplay"
+#send-keys "cd ../onecommon/aaai2020/experiments" Enter
+#send-keys "ocenv" Enter
+#split-window -h -p 50
+#send-keys "cd ../onecommon/aaai2020/experiments" Enter
+#send-keys "ocenv" Enter
+
