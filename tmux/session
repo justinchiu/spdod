@@ -3,13 +3,15 @@ send-keys "poetry shell" Enter
 split-window -h -p 50
 send-keys "poetry shell" Enter
 
-#new-window -n "oc"
-#split-window -h -p 50
+new-window -n "spdop"
+send-keys "cd spdop" Enter
+split-window -h -p 50
+send-keys "cd spdop" Enter
 
-#new-window -n "agent"
-#send-keys "cd oc/agent" Enter
-#split-window -h -p 50
-#send-keys "cd oc/agent" Enter
+new-window -n "agent"
+send-keys "cd spdop/agent" Enter
+split-window -h -p 50
+send-keys "cd spdop/agent" Enter
 
 #new-window -n "agent2"
 #send-keys "cd oc/agent2" Enter

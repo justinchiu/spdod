@@ -1,4 +1,4 @@
-# spdop
+# spdod
 
 ## Installation
 [Poetry](https://python-poetry.org/) is required.

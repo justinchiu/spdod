@@ -1,3 +1,4 @@
 #!/bin/bash
 
-tmux new-session -s "oc" -n "root" "tmux source-file tmux/session"
+conda deactivate
+tmux new-session -s "dod" -n "root" "tmux source-file tmux/session"
