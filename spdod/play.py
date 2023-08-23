@@ -17,11 +17,12 @@ best_reward = game.best_assignment_reward
 # observed
 tables = game.tables
 
-
 def score(table, values):
     rows, cols = lsa(values)
     assignment = list(zip(rows, cols))
     score = table.score(assignment)
     return score
 
+max_value = lsa(values, maximize=True)
+value0 = lsa(values * masks[0], maximize=True)
 import pdb; pdb.set_trace()
