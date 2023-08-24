@@ -18,3 +18,10 @@ send-keys "cd spdod/agent" Enter
 split-window -h -p 50
 send-keys "conda deactivate" Enter
 send-keys "cd spdod/agent" Enter
+
+new-window -n "data"
+send-keys "conda deactivate" Enter
+send-keys "cd ../dialop/dialop/data" Enter
+split-window -h -p 50
+send-keys "conda deactivate" Enter
+send-keys "cd ../dialop/dialop/data" Enter

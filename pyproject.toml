@@ -26,6 +26,7 @@ Jinja2 = { version = "3.1.2", optional = true }
 Werkzeug = { version = "2.2.2", optional = true }
 boto3 = { version = "1.26.69", optional = true }
 ortools = "*"
+seaborn = "*"
 
 [tool.poetry.extras]
 apps = ["Flask", "Flask-SocketIO", "Jinja2", "ruamel.yaml", "Werkzeug", "boto3"]
