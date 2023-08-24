@@ -3,6 +3,8 @@ from dialop.envs import OptimizationEnv
 from scipy.optimize import linear_sum_assignment as lsa
 import seaborn as sns
 import pandas as pd
+import numpy as np
+import time
 
 import matplotlib.pyplot as plt
 import matplotlib
@@ -14,6 +16,7 @@ env = OptimizationEnv()
 
 both_ratios = []
 max_ratios = []
+times = []
 for n in range(NUM_TRIALS):
     env.reset()
     game = env.game
@@ -35,9 +38,11 @@ for n in range(NUM_TRIALS):
         score = table.score(assignment)
         return score
 
+    start = time.time()
     max_value = values[lsa(values, maximize=True)].sum()
     value0 = values[lsa(values * masks[0], maximize=True)].sum()
     value_both = values[lsa(values * (masks[0] | masks[1]), maximize=True)].sum()
+    times.append(time.time() - start)
 
     print(n)
     print(value0 / value_both)
@@ -53,3 +58,4 @@ sns.violinplot(data=df)
 
 # Save the plot
 plt.savefig("figures/max_both_ratios.png")
+print("Time per solve:", np.array(times).mean() / 3)
