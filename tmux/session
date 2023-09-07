@@ -14,10 +14,19 @@ send-keys "cd spdod" Enter
 
 new-window -n "agent"
 send-keys "conda deactivate" Enter
+send-keys "poetry shell" Enter
 send-keys "cd spdod/agent" Enter
 split-window -h -p 50
 send-keys "conda deactivate" Enter
 send-keys "cd spdod/agent" Enter
+send-keys "poetry shell" Enter
+
+new-window -n "plan"
+send-keys "conda deactivate" Enter
+send-keys "cd spdod/plan" Enter
+split-window -h -p 50
+send-keys "conda deactivate" Enter
+send-keys "cd spdod/plan" Enter
 
 new-window -n "data"
 send-keys "conda deactivate" Enter

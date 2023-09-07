@@ -32,6 +32,29 @@ for n in range(NUM_TRIALS):
     # observed
     tables = game.tables
 
+    # bayesopt approach
+    # later: move this to spdod/plan/model.py
+    mask = masks[0].astype(bool)
+    w_known = values[mask]
+
+    # what we will use for guessing
+    W = np.zeros_like(values)
+    W[mask] = w_known
+
+    # create latent variable
+    num_latents = W.size - mask.sum()
+    w = np.full(num_latents, 25)
+
+    # guess
+    x = lsa(W, maximize=True)
+    # value
+    y = values[x].sum()
+
+    # 
+
+    import pdb; pdb.set_trace()
+    # / bayesopt approach
+
     def score(table, values):
         rows, cols = lsa(values)
         assignment = list(zip(rows, cols))
