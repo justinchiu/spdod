@@ -13,6 +13,7 @@ import matplotlib
 from spdod.plan.models import ei_2step
 
 NUM_TRIALS = 100
+#NUM_TRIALS = 25
 
 env = OptimizationEnv()
 
@@ -93,3 +94,6 @@ sns.violinplot(data=df)
 plt.savefig("figures/max_both_ratios.png")
 print("Time per solve:", np.array(times).mean() / 3)
 print("Time per EI MCMC solve:", np.array(ei_times).mean())
+
+print("first turn competitive ratio avg:", np.mean(both_ratios))
+print("ei competitive ratio avg", np.mean(ei_both_ratios))
