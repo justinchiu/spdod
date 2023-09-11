@@ -9,10 +9,11 @@ from jax import random
 import numpyro
 import numpyro.distributions as dist
 
-from numpyro.infer import SVI, Trace_ELBO
-from numpyro.infer.autoguide import AutoLaplaceApproximation, AutoDiagonalNormal
+#from numpyro.infer import SVI, Trace_ELBO
+#from numpyro.infer.autoguide import AutoLaplaceApproximation, AutoDiagonalNormal
 
 from numpyro.infer import MCMC, NUTS
+from numpyro.infer import Predictive
 
 
 def outcome_model(W_obs, mask, X, Y=None, mu=50):
@@ -70,7 +71,6 @@ def ei(rng_key, model, samples, w_obs, mask):
         assns[i] = xs
     assns = jnp.stack(assns)
 
-    from numpyro.infer import Predictive
     rng_key, rng_key_ = random.split(rng_key)
     predictive = Predictive(model, samples)
     predictions = predictive(
@@ -85,29 +85,9 @@ def ei(rng_key, model, samples, w_obs, mask):
     next_y = np.array([(values * next_x).sum()])
     return rng_key, next_x, next_y
 
-if __name__ == "__main__":
-    from dialop.envs import OptimizationEnv
-    from scipy.optimize import linear_sum_assignment as lsa
 
-    env = OptimizationEnv()
-
-    env.reset()
-    game = env.game
-
-    # ground truth
-    table = game.table
-    masks = game.masks
-    scales = game.scales
-    values = table.values
-
-    best_reward = game.best_assignment_reward
-
-    # observed
-    tables = game.tables
-
+def ei_2step(values, mask):
     # bayesopt approach
-    # later: move this to spdod/plan/model.py
-    mask = masks[0].astype(bool)
     #w_obs = values[mask]
     w_obs = (values * mask)
 
@@ -150,6 +130,33 @@ if __name__ == "__main__":
     )
 
     rng_key, next_x2, next_y2 = ei(rng_key, outcome_model, samples, w_obs, mask)
-    import pdb; pdb.set_trace()
+
+    xs = np.array([x, next_x, next_x2])
+    ys = np.array([y, next_y, next_y2])
+    return xs, ys
+    return xs[ys.argmax()]
 
 
+
+if __name__ == "__main__":
+    from dialop.envs import OptimizationEnv
+    from scipy.optimize import linear_sum_assignment as lsa
+
+    env = OptimizationEnv()
+
+    env.reset()
+    game = env.game
+
+    # ground truth
+    table = game.table
+    masks = game.masks
+    scales = game.scales
+    values = table.values
+
+    best_reward = game.best_assignment_reward
+
+    # observed
+    tables = game.tables
+    mask = masks[0].astype(bool)
+
+    xs, ys = ei_2step(values, mask)
