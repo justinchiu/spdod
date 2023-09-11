@@ -1,5 +1,5 @@
 [tool.poetry]
-name = "spdop"
+name = "spdod"
 version = "0.0.0"
 description = "Symbolic planning for dialogue-distributed optimization."
 authors = ["Justin Chiu <chiu.justin.t@gmail.com>"]

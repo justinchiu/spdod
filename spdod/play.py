@@ -9,14 +9,19 @@ import time
 import matplotlib.pyplot as plt
 import matplotlib
 
+from spdod.plan.models import ei_2step
 
 NUM_TRIALS = 100
 
 env = OptimizationEnv()
 
-both_ratios = []
+# dont use
 max_ratios = []
+
+both_ratios = []
+ei_both_ratios = []
 times = []
+ei_times = []
 for n in range(NUM_TRIALS):
     env.reset()
     game = env.game
@@ -50,10 +55,10 @@ for n in range(NUM_TRIALS):
     # value
     y = values[x].sum()
 
-    # 
-
-    import pdb; pdb.set_trace()
-    # / bayesopt approach
+    start = time.time()
+    xs, ys = ei_2step(values, mask)
+    value_ei = ys.max()
+    ei_times.append(time.time() - start)
 
     def score(table, values):
         rows, cols = lsa(values)
@@ -69,12 +74,16 @@ for n in range(NUM_TRIALS):
 
     print(n)
     print(value0 / value_both)
-    print(value0 / max_value)
+    #print(value0 / max_value)
+    print(value_ei / value_both)
     both_ratios.append(value0 / value_both)
     max_ratios.append(value0 / max_value)
+
+    ei_both_ratios.append(value_ei / value_both)
     #import pdb; pdb.set_trace()
     
-df = pd.DataFrame({"Max ratio": max_ratios, "Both ratio": both_ratios})
+#df = pd.DataFrame({"Max ratio": max_ratios, "Both ratio": both_ratios})
+df = pd.DataFrame({"EI both ratio": ei_both_ratios, "Both ratio": both_ratios})
 
 # Create violin plot
 sns.violinplot(data=df)
@@ -82,3 +91,4 @@ sns.violinplot(data=df)
 # Save the plot
 plt.savefig("figures/max_both_ratios.png")
 print("Time per solve:", np.array(times).mean() / 3)
+print("Time per EI MCMC solve:", np.array(ei_times).mean())

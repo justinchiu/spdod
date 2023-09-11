@@ -1,6 +1,7 @@
 # TODO: Implement BayesOpt[https://num.pyro.ai/en/stable/examples/thompson_sampling.html]
 # with EI and KG acquisition functions
  
+from scipy.optimize import linear_sum_assignment as lsa
 import numpy as np
 
 from jax import numpy as jnp
@@ -59,7 +60,7 @@ def run_mcmc(rng_key, model, w_obs, mask, x, y):
     #posterior_std = samples["W_latent"].std(0).reshape(values.shape)
     return rng_key, samples
 
-def ei(rng_key, model, samples, w_obs, mask):
+def ei(rng_key, model, samples, w_obs, mask, values):
     rng_key, rng_key_ = random.split(rng_key)
     batch_size = 64
     noise = dist.Gumbel(0,1).expand([batch_size,8,8]).sample(rng_key_)
@@ -117,7 +118,7 @@ def ei_2step(values, mask):
 
     rng_key, samples = run_mcmc(rng_key, outcome_model, w_obs, mask, x, y)
 
-    rng_key, next_x, next_y = ei(rng_key, outcome_model, samples, w_obs, mask)
+    rng_key, next_x, next_y = ei(rng_key, outcome_model, samples, w_obs, mask, values)
 
     # next step
     rng_key, samples_2 = run_mcmc(
@@ -129,7 +130,7 @@ def ei_2step(values, mask):
         jnp.stack([y, next_y]),
     )
 
-    rng_key, next_x2, next_y2 = ei(rng_key, outcome_model, samples, w_obs, mask)
+    rng_key, next_x2, next_y2 = ei(rng_key, outcome_model, samples, w_obs, mask, values)
 
     xs = np.array([x, next_x, next_x2])
     ys = np.array([y, next_y, next_y2])
@@ -140,7 +141,6 @@ def ei_2step(values, mask):
 
 if __name__ == "__main__":
     from dialop.envs import OptimizationEnv
-    from scipy.optimize import linear_sum_assignment as lsa
 
     env = OptimizationEnv()
 
