@@ -45,7 +45,7 @@ def run_mcmc(rng_key, model, w_obs, mask, x, y):
     # Run NUTS.
     kernel = NUTS(model)
     num_samples = 2000
-    mcmc = MCMC(kernel, num_warmup=1000, num_samples=num_samples)
+    mcmc = MCMC(kernel, num_warmup=1000, num_samples=num_samples, progress_bar=False)
     mcmc.run(
         rng_key_,
         W_obs=w_obs.flatten(),
@@ -53,7 +53,7 @@ def run_mcmc(rng_key, model, w_obs, mask, x, y):
         X=x.reshape(-1, 64),
         Y=y,
     )
-    mcmc.print_summary()
+    #mcmc.print_summary()
     samples = mcmc.get_samples()
 
     #posterior_mu = samples["W_latent"].mean(0).reshape(values.shape)
@@ -65,7 +65,7 @@ def ei(rng_key, model, samples, w_obs, mask, values):
     batch_size = 64
     noise = dist.Gumbel(0,1).expand([batch_size,8,8]).sample(rng_key_)
 
-    assns = [lsa(xs, maximize=True)for xs in noise]
+    assns = [lsa(xs, maximize=True) for xs in noise]
     for i, assn in enumerate(assns):
         xs = np.zeros_like(values)
         xs[assn] = 1

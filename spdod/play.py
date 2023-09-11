@@ -5,6 +5,7 @@ import seaborn as sns
 import pandas as pd
 import numpy as np
 import time
+from rich.progress import track
 
 import matplotlib.pyplot as plt
 import matplotlib
@@ -22,7 +23,7 @@ both_ratios = []
 ei_both_ratios = []
 times = []
 ei_times = []
-for n in range(NUM_TRIALS):
+for n in track(range(NUM_TRIALS)):
     env.reset()
     game = env.game
 
