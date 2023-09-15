@@ -36,6 +36,25 @@ def outcome_model(W_obs, mask, X, Y=None, mu=50):
     #numpyro.deterministic("Y", Y_mu, obs=Y)
     numpyro.sample("Y", dist.Normal(Y_mu, jnp.ones(1)), obs=Y)
 
+def outcome_duel_model(W_obs, mask, X, Y=None, mu=50):
+    n = mask.size
+
+    W_obs = numpyro.sample(
+        "W_obs",
+        dist.Uniform(0, 100).expand([n]).mask(mask),
+        obs=W_obs,
+    )
+    W_latent = numpyro.sample(
+        "W_impute",
+        dist.Uniform(0, 100).expand([n]).mask(~mask),
+    )
+
+    W = W_obs * mask + W_latent * (~mask)
+    #Y_mu = jnp.dot(W, X)
+    Y_mu = (W * X).sum(-1)
+    #numpyro.deterministic("Y", Y_mu, obs=Y)
+    numpyro.sample("Y", dist.Normal(Y_mu, jnp.ones(1)), obs=Y)
+
 def duel_model(W_obs, mask, X, Y=None):
     pass
 
