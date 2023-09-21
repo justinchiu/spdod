@@ -36,7 +36,7 @@ def outcome_model(W_obs, mask, X, Y=None, mu=50):
     #numpyro.deterministic("Y", Y_mu, obs=Y)
     numpyro.sample("Y", dist.Normal(Y_mu, jnp.ones(1)), obs=Y)
 
-def outcome_duel_model(W_obs, mask, X, Y=None, mu=50):
+def duel_model(W_obs, mask, X1, X2, Y=None, mu=50):
     n = mask.size
 
     W_obs = numpyro.sample(
@@ -51,12 +51,11 @@ def outcome_duel_model(W_obs, mask, X, Y=None, mu=50):
 
     W = W_obs * mask + W_latent * (~mask)
     #Y_mu = jnp.dot(W, X)
-    Y_mu = (W * X).sum(-1)
+    Y1_mu = (W * X1).sum(-1)
+    Y2_mu = (W * X2).sum(-1)
     #numpyro.deterministic("Y", Y_mu, obs=Y)
-    numpyro.sample("Y", dist.Normal(Y_mu, jnp.ones(1)), obs=Y)
+    numpyro.sample("Y", dist.Bernoulli(logits=[Y_mu1, Y_mu2]), obs=Y)
 
-def duel_model(W_obs, mask, X, Y=None):
-    pass
 
 def run_mcmc(rng_key, model, w_obs, mask, x, y):
     rng_key, rng_key_ = random.split(rng_key)
@@ -179,3 +178,4 @@ if __name__ == "__main__":
     mask = masks[0].astype(bool)
 
     xs, ys = ei_2step(values, mask)
+
