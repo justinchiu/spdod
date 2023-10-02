@@ -55,7 +55,8 @@ def duel_model(W_obs, mask, X1, X2, Y=None, mu=50):
     Y1_mu = (W * X1).sum(-1)
     Y2_mu = (W * X2).sum(-1)
     #numpyro.deterministic("Y", Y_mu, obs=Y)
-    logits = jnp.array([Y_mu1, Y_mu2])
+    temperature = 1
+    logits = jnp.array([Y_mu1, Y_mu2]) / temperature
     Z = logsumexp(logits)
     numpyro.sample("Y", dist.Bernoulli(logits=Y_mu1 - Z), obs=Y)
 
@@ -108,22 +109,17 @@ def ei(rng_key, model, samples, w_obs, mask, values):
     return rng_key, next_x, next_y
 
 
-def ei_2step(values, mask):
+def ei_2step(rng_key, values, mask):
     # bayesopt approach
     #w_obs = values[mask]
     w_obs = (values * mask)
-
 
     x_init = lsa(w_obs, maximize=True)
     x = np.zeros_like(values)
     x[x_init] = 1
     y = np.array([(values * x).sum()])
 
-    # Start from this source of randomness. We will split keys for subsequent operations.
-    rng_key = random.PRNGKey(0)
-
     rng_key, samples = run_mcmc(rng_key, outcome_model, w_obs, mask, x, y)
-
     rng_key, next_x, next_y = ei(rng_key, outcome_model, samples, w_obs, mask, values)
 
     # next step
@@ -141,11 +137,44 @@ def ei_2step(values, mask):
     xs = np.array([x, next_x, next_x2])
     ys = np.array([y, next_y, next_y2])
     return xs, ys
-    return xs[ys.argmax()]
 
 
-def kg():
+def kg(rng_key, values, mask):
+    rng_key, rng_key_ = random.split(rng_key)
+    batch_size = 64
+    noise = dist.Gumbel(0,1).expand([3, batch_size,8,8]).sample(rng_key_)
+
+    # sample full assignments
+    assns = [lsa(xs, maximize=True) for xs in noise[0]]
+    for i, assn in enumerate(assns):
+        xs = np.zeros_like(values)
+        xs[assn] = 1
+        assns[i] = xs
+    assns = jnp.stack(assns)
+
+    # sample pairwise comparisons
+    pairs = noise[1:,:]
+    rng_key, rng_key_ = random.split(rng_key)
+    predictive = Predictive(model, samples)
+    predictions = predictive(
+        rng_key_,
+        W_obs=w_obs.flatten(),
+        mask=mask.flatten(),
+        X=assns.reshape(batch_size, 64),
+    )
+    predicted_Y = predictions["Y"].mean(0)
+
+    next_x = assns[predicted_Y.argmax()]
+    next_y = np.array([(values * next_x).sum()])
+    return rng_key, next_x, next_y
     pass
+
+def kg_2step(rng_key, values, mask):
+    w_obs = (values * mask)
+    x_init = lsa(w_obs, maximize=True)
+    x = np.zeros_like(values)
+    x[x_init] = 1
+    y = np.array([(values * x).sum()])
 
 
 if __name__ == "__main__":
