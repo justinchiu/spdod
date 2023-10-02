@@ -6,6 +6,7 @@ import numpy as np
 
 from jax import numpy as jnp
 from jax import random
+from jax.scipy.special import logsumexp
 
 import numpyro
 import numpyro.distributions as dist
@@ -54,7 +55,9 @@ def duel_model(W_obs, mask, X1, X2, Y=None, mu=50):
     Y1_mu = (W * X1).sum(-1)
     Y2_mu = (W * X2).sum(-1)
     #numpyro.deterministic("Y", Y_mu, obs=Y)
-    numpyro.sample("Y", dist.Bernoulli(logits=[Y_mu1, Y_mu2]), obs=Y)
+    logits = jnp.array([Y_mu1, Y_mu2])
+    Z = logsumexp(logits)
+    numpyro.sample("Y", dist.Bernoulli(logits=Y_mu1 - Z), obs=Y)
 
 
 def run_mcmc(rng_key, model, w_obs, mask, x, y):
@@ -116,21 +119,6 @@ def ei_2step(values, mask):
     x[x_init] = 1
     y = np.array([(values * x).sum()])
 
-    """ SVI stuff that i'm not using
-    optimizer = numpyro.optim.Minimize()
-    #optimizer = numpyro.optim.Adam(step_size=0.005, b1=0.5)
-    guide = AutoLaplaceApproximation(outcome_model)
-    #guide = AutoDiagonalNormal(outcome_model)
-    svi = SVI(outcome_model, guide, optimizer, loss=Trace_ELBO())
-    init_state = svi.init(random.PRNGKey(0), w_obs.flatten(), mask.flatten(), x.flatten(), y)
-    optimal_state, loss = svi.update(init_state, w_obs.flatten(), mask.flatten(), x.flatten(), y)
-    params = svi.get_params(optimal_state)
-    posterior = guide.get_posterior(params)
-    print(posterior.mean)
-    print(posterior.variance)
-    """
-
-
     # Start from this source of randomness. We will split keys for subsequent operations.
     rng_key = random.PRNGKey(0)
 
@@ -155,6 +143,9 @@ def ei_2step(values, mask):
     return xs, ys
     return xs[ys.argmax()]
 
+
+def kg():
+    pass
 
 
 if __name__ == "__main__":
