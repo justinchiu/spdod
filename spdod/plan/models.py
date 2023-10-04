@@ -139,7 +139,7 @@ def ei_2step(rng_key, values, mask):
     return xs, ys
 
 
-def kg(rng_key, values, mask):
+def kg(rng_key, values, mask, prior):
     rng_key, rng_key_ = random.split(rng_key)
     batch_size = 64
     noise = dist.Gumbel(0,1).expand([3, batch_size,8,8]).sample(rng_key_)
