@@ -6,6 +6,7 @@ import pandas as pd
 import numpy as np
 import time
 from rich.progress import track
+import jax
 
 import matplotlib.pyplot as plt
 import matplotlib
@@ -16,6 +17,7 @@ NUM_TRIALS = 100
 #NUM_TRIALS = 25
 
 env = OptimizationEnv()
+rng_key = jax.random.PRNGKey(1234)
 
 # dont use
 max_ratios = []
@@ -58,7 +60,8 @@ for n in track(range(NUM_TRIALS)):
     y = values[x].sum()
 
     start = time.time()
-    xs, ys = ei_2step(values, mask)
+    rng_key, rng_key_ = jax.random.split(rng_key)
+    xs, ys = ei_2step(rng_key_, values, mask)
     value_ei = ys.max()
     ei_times.append(time.time() - start)
 
