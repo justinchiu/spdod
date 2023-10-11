@@ -132,19 +132,20 @@ def ei_2step(rng_key, values, mask):
         jnp.stack([y, next_y]),
     )
 
-    rng_key, next_x2, next_y2 = ei(rng_key, outcome_model, samples, w_obs, mask, values)
+    rng_key, next_x2, next_y2 = ei(rng_key, outcome_model, samples_2, w_obs, mask, values)
 
     xs = np.array([x, next_x, next_x2])
     ys = np.array([y, next_y, next_y2])
     return xs, ys
 
 
-def kg(rng_key, values, mask, prior):
+def kg(rng_key, model, samples, w_obs, mask, values):
     rng_key, rng_key_ = random.split(rng_key)
     batch_size = 64
     noise = dist.Gumbel(0,1).expand([3, batch_size,8,8]).sample(rng_key_)
 
-    # sample full assignments
+    # sample uniformly random full assignments
+    # TODO: sample assignments from the prior
     assns = [lsa(xs, maximize=True) for xs in noise[0]]
     for i, assn in enumerate(assns):
         xs = np.zeros_like(values)
@@ -162,12 +163,12 @@ def kg(rng_key, values, mask, prior):
         mask=mask.flatten(),
         X=assns.reshape(batch_size, 64),
     )
-    predicted_Y = predictions["Y"].mean(0)
+    predicted_W = predictions["W"].mean(0)
+    import pdb; pdb.set_trace()
 
     next_x = assns[predicted_Y.argmax()]
     next_y = np.array([(values * next_x).sum()])
     return rng_key, next_x, next_y
-    pass
 
 def kg_2step(rng_key, values, mask):
     w_obs = (values * mask)
@@ -197,5 +198,8 @@ if __name__ == "__main__":
     tables = game.tables
     mask = masks[0].astype(bool)
 
-    xs, ys = ei_2step(values, mask)
+    #xs, ys = ei_2step(values, mask)
 
+    rng_key = random.PRNGKey(0)
+    rng_key, samples = run_mcmc(rng_key, outcome_model, values * mask, mask, x, y)
+    import pdb; pdb.set_trace()
