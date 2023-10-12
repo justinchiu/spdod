@@ -37,7 +37,7 @@ def outcome_model(W_obs, mask, X, Y=None, mu=50):
     #numpyro.deterministic("Y", Y_mu, obs=Y)
     numpyro.sample("Y", dist.Normal(Y_mu, jnp.ones(1)), obs=Y)
 
-def duel_model(W_obs, mask, X1, X2, Y=None, mu=50):
+def duel_model(W_obs, mask, X1=None, X2=None, Y=None, mu=50):
     n = mask.size
 
     W_obs = numpyro.sample(
@@ -51,14 +51,15 @@ def duel_model(W_obs, mask, X1, X2, Y=None, mu=50):
     )
 
     W = W_obs * mask + W_latent * (~mask)
-    #Y_mu = jnp.dot(W, X)
-    Y_mu1 = (W * X1).sum(-1)
-    Y_mu2 = (W * X2).sum(-1)
-    #numpyro.deterministic("Y", Y_mu, obs=Y)
-    temperature = 1
-    logits = jnp.array([Y_mu1, Y_mu2]) / temperature
-    Z = logsumexp(logits)
-    numpyro.sample("Y", dist.Bernoulli(logits=Y_mu1 - Z), obs=Y)
+    if X1 is not None and X2 is not None:
+        #Y_mu = jnp.dot(W, X)
+        Y_mu1 = (W * X1).sum(-1)
+        Y_mu2 = (W * X2).sum(-1)
+        #numpyro.deterministic("Y", Y_mu, obs=Y)
+        temperature = 1
+        logits = jnp.array([Y_mu1, Y_mu2]) / temperature
+        Z = logsumexp(logits)
+        numpyro.sample("Y", dist.Bernoulli(logits=Y_mu1 - Z), obs=Y)
 
 
 def run_mcmc(rng_key, model, w_obs, mask, x, y):
@@ -73,6 +74,28 @@ def run_mcmc(rng_key, model, w_obs, mask, x, y):
         W_obs=w_obs.flatten(),
         mask=mask.flatten(),
         X=x.reshape(-1, 64) if x is not None else x,
+        Y=y,
+    )
+    #mcmc.print_summary()
+    samples = mcmc.get_samples()
+
+    #posterior_mu = samples["W_latent"].mean(0).reshape(values.shape)
+    #posterior_std = samples["W_latent"].std(0).reshape(values.shape)
+    return rng_key, samples
+
+def run_duel_mcmc(rng_key, model, w_obs, mask, x1, x2, y):
+    rng_key, rng_key_ = random.split(rng_key)
+
+    # Run NUTS.
+    kernel = NUTS(model)
+    num_samples = 2000
+    mcmc = MCMC(kernel, num_warmup=1000, num_samples=num_samples, progress_bar=False)
+    mcmc.run(
+        rng_key_,
+        W_obs=w_obs.flatten(),
+        mask=mask.flatten(),
+        X1=x1.reshape(-1, 64) if x1 is not None else x1,
+        X2=x2.reshape(-1, 64) if x2 is not None else x2,
         Y=y,
     )
     #mcmc.print_summary()
@@ -197,9 +220,40 @@ if __name__ == "__main__":
     # observed
     tables = game.tables
     mask = masks[0].astype(bool)
+    w_obs = values * mask
 
     #xs, ys = ei_2step(values, mask)
 
+    # messing with KG
+    # Steps in KG:
+    # 1. sample candidate actions
+    # 2. for each candidate action: compute marginal weight posterior (marginalizing over responses)
+    # 3. for each candidate action: compute expected utility from marginal weight posterior mean
+    # 4. pick action with highest expected utility
+     
     rng_key = random.PRNGKey(0)
-    rng_key, samples = run_mcmc(rng_key, outcome_model, values * mask, mask, None, None)
+
+    rng_key, rng_key_ = random.split(rng_key)
+    noise = dist.Gumbel(0,1).expand([128,8,8]).sample(rng_key_)
+    import pdb; pdb.set_trace()
+    assns = [lsa(xs, maximize=True) for xs in noise]
+
+    rng_key, rng_key_ = random.split(rng_key)
+    rng_key, samples = run_duel_mcmc(rng_key_, duel_model, w_obs, mask, x1=None, x2=None, y=None)
+
+    prior_mean = w_obs + samples["W_latent"].mean(0).reshape(8,8) * ~mask
+    x0 = lsa(prior_mean, maximize=True)
+    y0 = prior_mean[x0].sum()
+
+    rng_key, rng_key_ = random.split(rng_key)
+    predictive = Predictive(duel_model, samples)
+    predictions = predictive(
+        rng_key_,
+        W_obs=w_obs.flatten(),
+        mask=mask.flatten(),
+        X1=None,
+        X2=None,
+        Y=None,
+    )
+
     import pdb; pdb.set_trace()
