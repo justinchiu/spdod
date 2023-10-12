@@ -27,7 +27,7 @@ def outcome_model(W_obs, mask, X, Y=None, mu=50):
         obs=W_obs,
     )
     W_latent = numpyro.sample(
-        "W_impute",
+        "W_latent",
         dist.Uniform(0, 100).expand([n]).mask(~mask),
     )
 
@@ -46,14 +46,14 @@ def duel_model(W_obs, mask, X1, X2, Y=None, mu=50):
         obs=W_obs,
     )
     W_latent = numpyro.sample(
-        "W_impute",
+        "W_latent",
         dist.Uniform(0, 100).expand([n]).mask(~mask),
     )
 
     W = W_obs * mask + W_latent * (~mask)
     #Y_mu = jnp.dot(W, X)
-    Y1_mu = (W * X1).sum(-1)
-    Y2_mu = (W * X2).sum(-1)
+    Y_mu1 = (W * X1).sum(-1)
+    Y_mu2 = (W * X2).sum(-1)
     #numpyro.deterministic("Y", Y_mu, obs=Y)
     temperature = 1
     logits = jnp.array([Y_mu1, Y_mu2]) / temperature
@@ -72,7 +72,7 @@ def run_mcmc(rng_key, model, w_obs, mask, x, y):
         rng_key_,
         W_obs=w_obs.flatten(),
         mask=mask.flatten(),
-        X=x.reshape(-1, 64),
+        X=x.reshape(-1, 64) if x is not None else x,
         Y=y,
     )
     #mcmc.print_summary()
@@ -163,7 +163,7 @@ def kg(rng_key, model, samples, w_obs, mask, values):
         mask=mask.flatten(),
         X=assns.reshape(batch_size, 64),
     )
-    predicted_W = predictions["W"].mean(0)
+    predicted_W = predictions["W_latent"].mean(0)
     import pdb; pdb.set_trace()
 
     next_x = assns[predicted_Y.argmax()]
@@ -201,5 +201,5 @@ if __name__ == "__main__":
     #xs, ys = ei_2step(values, mask)
 
     rng_key = random.PRNGKey(0)
-    rng_key, samples = run_mcmc(rng_key, outcome_model, values * mask, mask, x, y)
+    rng_key, samples = run_mcmc(rng_key, outcome_model, values * mask, mask, None, None)
     import pdb; pdb.set_trace()
