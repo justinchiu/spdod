@@ -6,10 +6,10 @@ authors = ["Justin Chiu <chiu.justin.t@gmail.com>"]
 readme = "README.md"
 
 [tool.poetry.dependencies]
-python = "^3.9"
-numpy = "*"
-scipy = "*"
-jaxlib = "^0.4.14"
+python = ">=3.9,<3.13"
+numpy = "^1.26.2"
+scipy = "^1.11"
+jaxlib = "*"
 jax = "*"
 tfp-nightly = "*"
 numpyro = "*"
@@ -27,7 +27,7 @@ Jinja2 = { version = "3.1.2", optional = true }
 "ruamel.yaml" = { version = "0.17.21", optional = true }
 Werkzeug = { version = "2.2.2", optional = true }
 boto3 = { version = "1.26.69", optional = true }
-ortools = "*"
+#ortools = "*"
 seaborn = "*"
 
 [tool.poetry.extras]
