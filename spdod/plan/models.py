@@ -235,8 +235,9 @@ if __name__ == "__main__":
 
     rng_key, rng_key_ = random.split(rng_key)
     noise = dist.Gumbel(0,1).expand([128,8,8]).sample(rng_key_)
-    import pdb; pdb.set_trace()
     assns = [lsa(xs, maximize=True) for xs in noise]
+    x1 = assns[:len(assns)//2]
+    x2 = assns[len(assns)//2:]
 
     rng_key, rng_key_ = random.split(rng_key)
     rng_key, samples = run_duel_mcmc(rng_key_, duel_model, w_obs, mask, x1=None, x2=None, y=None)
@@ -244,6 +245,7 @@ if __name__ == "__main__":
     prior_mean = w_obs + samples["W_latent"].mean(0).reshape(8,8) * ~mask
     x0 = lsa(prior_mean, maximize=True)
     y0 = prior_mean[x0].sum()
+    import pdb; pdb.set_trace()
 
     rng_key, rng_key_ = random.split(rng_key)
     predictive = Predictive(duel_model, samples)
@@ -251,8 +253,8 @@ if __name__ == "__main__":
         rng_key_,
         W_obs=w_obs.flatten(),
         mask=mask.flatten(),
-        X1=None,
-        X2=None,
+        X1=x1,
+        X2=x2,
         Y=None,
     )
 
