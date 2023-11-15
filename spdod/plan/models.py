@@ -53,8 +53,8 @@ def duel_model(W_obs, mask, X1=None, X2=None, Y=None, mu=50):
     W = W_obs * mask + W_latent * (~mask)
     if X1 is not None and X2 is not None:
         #Y_mu = jnp.dot(W, X)
-        Y_mu1 = (W * X1).sum(-1)
-        Y_mu2 = (W * X2).sum(-1)
+        Y_mu1 = (W[X1]).sum(-1)
+        Y_mu2 = (W[X2]).sum(-1)
         #numpyro.deterministic("Y", Y_mu, obs=Y)
         temperature = 1
         logits = jnp.array([Y_mu1, Y_mu2]) / temperature
@@ -233,19 +233,20 @@ if __name__ == "__main__":
      
     rng_key = random.PRNGKey(0)
 
-    rng_key, rng_key_ = random.split(rng_key)
-    noise = dist.Gumbel(0,1).expand([128,8,8]).sample(rng_key_)
-    assns = [lsa(xs, maximize=True) for xs in noise]
-    x1 = assns[:len(assns)//2]
-    x2 = assns[len(assns)//2:]
 
     rng_key, rng_key_ = random.split(rng_key)
     rng_key, samples = run_duel_mcmc(rng_key_, duel_model, w_obs, mask, x1=None, x2=None, y=None)
 
     prior_mean = w_obs + samples["W_latent"].mean(0).reshape(8,8) * ~mask
-    x0 = lsa(prior_mean, maximize=True)
-    y0 = prior_mean[x0].sum()
-    import pdb; pdb.set_trace()
+    rng_key, rng_key_ = random.split(rng_key)
+    noise = dist.Gumbel(0,1).expand([128,8,8]).sample(rng_key_)
+    assns = [lsa(prior_mean + xs, maximize=True) for xs in noise]
+    x1 = np.stack(assns[:len(assns)//2])
+    x2 = np.stack(assns[len(assns)//2:])
+    x1 = (x1[:,0] * 8 + x1[:,1])
+    x2 = (x2[:,0] * 8 + x2[:,1])
+    #x0 = lsa(prior_mean, maximize=True)
+    #y0 = prior_mean[x0].sum()
 
     rng_key, rng_key_ = random.split(rng_key)
     predictive = Predictive(duel_model, samples)
@@ -257,5 +258,15 @@ if __name__ == "__main__":
         X2=x2,
         Y=None,
     )
+    p_y = predictions["Y"].mean(0)
+    posterior_predictions = predictive(
+        rng_key_,
+        W_obs=w_obs.flatten(),
+        mask=mask.flatten(),
+        X1=x1,
+        X2=x2,
+        Y=None,
+    )
+
 
     import pdb; pdb.set_trace()
